@@ -17,13 +17,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install linters
-        run: pip install black ruff
+      - name: Install ruff
+        run: pip install ruff
 
-      - name: Check formatting with black
-        run: black --check *.py
+      - name: Check formatting
+        run: ruff format --check *.py
 
-      - name: Check linting with ruff
+      - name: Check linting
         run: ruff check *.py
 
   test:
