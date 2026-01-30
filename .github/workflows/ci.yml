@@ -54,7 +54,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          CFLAGS="-Wno-error=incompatible-function-pointer-types" pip install -r requirements.txt
 
       - name: Run tests
         run: python -m pytest test_bot.py -v
