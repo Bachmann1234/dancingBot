@@ -1,6 +1,6 @@
 sounddevice
 aubio
-numpy
+numpy<2
 pytest
 black
 ruff
