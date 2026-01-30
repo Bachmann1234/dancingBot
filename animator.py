@@ -12,7 +12,7 @@ class Animator:
     def __init__(self, fps: int = 30):
         self.fps = fps
         self.frame_duration = 1.0 / fps
-        self.current_frame = 'neutral'
+        self.current_frame = "neutral"
         self.animation_queue = []
         self.lock = threading.Lock()
         self.running = False
@@ -35,9 +35,9 @@ class Animator:
         self._last_frame_content = frame_content
 
         # Move cursor to home position and clear screen
-        sys.stdout.write('\033[H\033[J')
+        sys.stdout.write("\033[H\033[J")
         sys.stdout.write(frame_content)
-        sys.stdout.write('\n[Press Ctrl+C to exit]\n')
+        sys.stdout.write("\n[Press Ctrl+C to exit]\n")
         sys.stdout.flush()
 
     def _update(self):
@@ -46,7 +46,7 @@ class Animator:
             if self.animation_queue:
                 self.current_frame = self.animation_queue.pop(0)
             else:
-                self.current_frame = 'neutral'
+                self.current_frame = "neutral"
 
         self._draw()
 
@@ -77,6 +77,6 @@ class Animator:
     def cleanup(self):
         """Clean up terminal state."""
         # Show cursor and reset terminal
-        sys.stdout.write('\033[?25h')  # Show cursor
-        sys.stdout.write('\n')
+        sys.stdout.write("\033[?25h")  # Show cursor
+        sys.stdout.write("\n")
         sys.stdout.flush()

@@ -40,12 +40,12 @@ def run_live_mode(animator: Animator, stop_event: threading.Event):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Dancing Bot - ASCII bot that dances to the beat'
+        description="Dancing Bot - ASCII bot that dances to the beat"
     )
     parser.add_argument(
-        '--demo',
-        action='store_true',
-        help='Run in demo mode with simulated beats (no microphone needed)'
+        "--demo",
+        action="store_true",
+        help="Run in demo mode with simulated beats (no microphone needed)",
     )
     args = parser.parse_args()
 
@@ -63,20 +63,18 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     # Hide cursor
-    sys.stdout.write('\033[?25l')
+    sys.stdout.write("\033[?25l")
     sys.stdout.flush()
 
     try:
         # Start beat source in background thread
         if args.demo:
             beat_thread = threading.Thread(
-                target=run_demo_mode,
-                args=(animator, stop_event)
+                target=run_demo_mode, args=(animator, stop_event)
             )
         else:
             beat_thread = threading.Thread(
-                target=run_live_mode,
-                args=(animator, stop_event)
+                target=run_live_mode, args=(animator, stop_event)
             )
 
         beat_thread.start()
@@ -89,8 +87,8 @@ def main():
 
     finally:
         animator.cleanup()
-        print('Goodbye!')
+        print("Goodbye!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

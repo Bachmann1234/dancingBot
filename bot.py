@@ -26,10 +26,10 @@ BOB_DOWN = r"""
 
 # All frames in order for easy access
 FRAMES = {
-    'neutral': NEUTRAL,
-    'up': BOB_UP,
-    'down': BOB_DOWN,
+    "neutral": NEUTRAL,
+    "up": BOB_UP,
+    "down": BOB_DOWN,
 }
 
 # Animation sequence for a single bob
-BOB_SEQUENCE = ['up', 'down', 'neutral']
+BOB_SEQUENCE = ["up", "down", "neutral"]

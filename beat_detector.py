@@ -24,10 +24,10 @@ class BeatDetector:
         # Initialize aubio onset detector
         # 'default' method works well for general beat detection
         self.onset = aubio.onset(
-            method='default',
+            method="default",
             buf_size=hop_size * 2,
             hop_size=hop_size,
-            samplerate=sample_rate
+            samplerate=sample_rate,
         )
 
         # Adjust sensitivity (lower = more sensitive)
@@ -46,7 +46,7 @@ class BeatDetector:
 
         # Process in hop_size chunks
         for i in range(0, len(audio), self.hop_size):
-            chunk = audio[i:i + self.hop_size]
+            chunk = audio[i : i + self.hop_size]
             if len(chunk) == self.hop_size:
                 # Check for onset/beat
                 if self.onset(chunk):
@@ -59,7 +59,7 @@ class BeatDetector:
             channels=1,
             dtype=np.float32,
             blocksize=self.hop_size * 4,
-            callback=self._audio_callback
+            callback=self._audio_callback,
         )
         self.stream.start()
 

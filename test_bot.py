@@ -1,7 +1,6 @@
 """Tests for the dancing bot."""
 
 import threading
-import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -14,9 +13,9 @@ class TestBot(unittest.TestCase):
 
     def test_frames_exist(self):
         """All required frames should exist."""
-        self.assertIn('neutral', FRAMES)
-        self.assertIn('up', FRAMES)
-        self.assertIn('down', FRAMES)
+        self.assertIn("neutral", FRAMES)
+        self.assertIn("up", FRAMES)
+        self.assertIn("down", FRAMES)
 
     def test_frames_are_strings(self):
         """All frames should be non-empty strings."""
@@ -36,7 +35,7 @@ class TestAnimator(unittest.TestCase):
     def test_initial_state(self):
         """Animator should start in neutral state."""
         animator = Animator(fps=30)
-        self.assertEqual(animator.current_frame, 'neutral')
+        self.assertEqual(animator.current_frame, "neutral")
         self.assertEqual(animator.animation_queue, [])
 
     def test_trigger_bob_queues_animation(self):
@@ -48,14 +47,14 @@ class TestAnimator(unittest.TestCase):
     def test_trigger_bob_replaces_queue(self):
         """New bob trigger should replace pending animation."""
         animator = Animator(fps=30)
-        animator.animation_queue = ['up']  # Partial animation in progress
+        animator.animation_queue = ["up"]  # Partial animation in progress
         animator.trigger_bob()
         self.assertEqual(animator.animation_queue, list(BOB_SEQUENCE))
 
     def test_update_consumes_queue(self):
         """Update should consume animation queue."""
         animator = Animator(fps=30)
-        animator._last_frame_content = FRAMES['neutral']  # Prevent actual drawing
+        animator._last_frame_content = FRAMES["neutral"]  # Prevent actual drawing
 
         animator.trigger_bob()
         initial_len = len(animator.animation_queue)
@@ -74,7 +73,7 @@ class TestAnimator(unittest.TestCase):
 
         animator._update()
 
-        self.assertEqual(animator.current_frame, 'neutral')
+        self.assertEqual(animator.current_frame, "neutral")
 
     def test_frame_rate(self):
         """Animator should respect FPS setting."""
@@ -102,8 +101,8 @@ class TestAnimator(unittest.TestCase):
 class TestBeatDetector(unittest.TestCase):
     """Tests for beat_detector.py."""
 
-    @patch('beat_detector.sd')
-    @patch('beat_detector.aubio')
+    @patch("beat_detector.sd")
+    @patch("beat_detector.aubio")
     def test_initialization(self, mock_aubio, mock_sd):
         """BeatDetector should initialize with callback."""
         from beat_detector import BeatDetector
@@ -115,8 +114,8 @@ class TestBeatDetector(unittest.TestCase):
         self.assertEqual(detector.sample_rate, 44100)
         self.assertEqual(detector.hop_size, 512)
 
-    @patch('beat_detector.sd')
-    @patch('beat_detector.aubio')
+    @patch("beat_detector.sd")
+    @patch("beat_detector.aubio")
     def test_start_creates_stream(self, mock_aubio, mock_sd):
         """Start should create and start audio stream."""
         from beat_detector import BeatDetector
@@ -128,8 +127,8 @@ class TestBeatDetector(unittest.TestCase):
         mock_sd.InputStream.assert_called_once()
         mock_sd.InputStream.return_value.start.assert_called_once()
 
-    @patch('beat_detector.sd')
-    @patch('beat_detector.aubio')
+    @patch("beat_detector.sd")
+    @patch("beat_detector.aubio")
     def test_stop_closes_stream(self, mock_aubio, mock_sd):
         """Stop should stop and close audio stream."""
         from beat_detector import BeatDetector
@@ -143,5 +142,5 @@ class TestBeatDetector(unittest.TestCase):
         mock_sd.InputStream.return_value.close.assert_called_once()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
