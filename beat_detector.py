@@ -35,22 +35,26 @@ class BeatDetector:
 
         self.stream = None
 
-    def _audio_callback(self, indata, frames, time_info, status):
+    def _audio_callback(self, indata, frames, _time_info, status):
         """Process incoming audio data."""
         if status:
             # Audio overrun/underrun, skip this buffer
             return
 
-        # Convert to mono float32 if needed
-        audio = indata[:, 0].astype(np.float32)
+        # Convert to mono float32 and ensure 1D shape
+        audio = indata.astype(np.float32).flatten()
 
         # Process in hop_size chunks
         for i in range(0, len(audio), self.hop_size):
             chunk = audio[i : i + self.hop_size]
             if len(chunk) == self.hop_size:
                 # Check for onset/beat
-                if self.onset(chunk):
-                    self.callback()
+                try:
+                    if self.onset(chunk):
+                        self.callback()
+                except Exception:
+                    # Don't let callback errors crash the audio stream
+                    pass
 
     def start(self):
         """Start listening to microphone."""

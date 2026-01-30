@@ -16,11 +16,15 @@ def run_demo_mode(animator: Animator, stop_event: threading.Event):
 
     while not stop_event.is_set():
         animator.trigger_bob()
-        # Sleep in small increments to allow quick shutdown
-        for _ in range(int(beat_interval * 10)):
+        # Sleep in small increments to allow quick shutdown:
+        # break the total beat interval into smaller sleeps so we can
+        # react promptly if stop_event is set.
+        sleep_increment = 0.1
+        num_sleeps = int(beat_interval / sleep_increment)
+        for _ in range(num_sleeps):
             if stop_event.is_set():
                 break
-            time.sleep(0.1)
+            time.sleep(sleep_increment)
 
 
 def run_live_mode(animator: Animator, stop_event: threading.Event):
@@ -56,17 +60,17 @@ def main():
     stop_event = threading.Event()
 
     # Handle Ctrl+C gracefully
-    def signal_handler(sig, frame):
+    def signal_handler(sig, _frame):
         stop_event.set()
 
     signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Hide cursor
-    sys.stdout.write("\033[?25l")
-    sys.stdout.flush()
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, signal_handler)
 
     try:
+        # Hide cursor
+        sys.stdout.write("\033[?25l")
+        sys.stdout.flush()
         # Start beat source in background thread
         if args.demo:
             beat_thread = threading.Thread(

@@ -11,7 +11,7 @@ An ASCII terminal bot that listens to music and dances to the beat, inspired by 
 
 ## Requirements
 
-- Python 3.12+
+- Python 3.11+
 - PortAudio library (for microphone input)
 
 ### System Dependencies

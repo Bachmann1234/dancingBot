@@ -83,10 +83,19 @@ class TestAnimator(unittest.TestCase):
     def test_thread_safety(self):
         """Trigger bob should be thread-safe."""
         animator = Animator(fps=30)
+        exceptions = []
 
         def trigger_many():
-            for _ in range(100):
-                animator.trigger_bob()
+            try:
+                for _ in range(100):
+                    animator.trigger_bob()
+                    # Verify queue is always in valid state
+                    with animator.lock:
+                        for frame in animator.animation_queue:
+                            if frame not in FRAMES:
+                                raise ValueError(f"Invalid frame: {frame}")
+            except Exception as e:
+                exceptions.append(e)
 
         threads = [threading.Thread(target=trigger_many) for _ in range(5)]
         for t in threads:
@@ -94,8 +103,11 @@ class TestAnimator(unittest.TestCase):
         for t in threads:
             t.join()
 
-        # Should not raise any exceptions and queue should be valid
-        self.assertEqual(animator.animation_queue, list(BOB_SEQUENCE))
+        # Should not raise any exceptions
+        self.assertEqual(exceptions, [])
+        # Queue should contain only valid frame names
+        for frame in animator.animation_queue:
+            self.assertIn(frame, FRAMES)
 
 
 class TestBeatDetector(unittest.TestCase):

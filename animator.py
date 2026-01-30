@@ -47,11 +47,10 @@ class Animator:
                 self.current_frame = self.animation_queue.pop(0)
             else:
                 self.current_frame = "neutral"
-
-        self._draw()
+            self._draw()
 
     def _draw(self):
-        """Draw the current frame."""
+        """Draw the current frame. Must be called with lock held."""
         self._clear_and_draw(self.current_frame)
 
     def run(self, stop_event: threading.Event):
@@ -59,7 +58,8 @@ class Animator:
         self.running = True
 
         # Initial draw
-        self._draw()
+        with self.lock:
+            self._draw()
 
         while not stop_event.is_set():
             frame_start = time.time()
