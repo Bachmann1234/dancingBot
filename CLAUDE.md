@@ -21,6 +21,14 @@ Microphone → BeatDetector (aubio) → Animator → Terminal
 - `beat_detector.py`: Audio capture via sounddevice, onset detection via aubio
 - `main.py`: Entry point, threading, signal handling
 
+## Before Committing
+
+```bash
+ruff format *.py        # Format code
+ruff check *.py         # Lint code
+python -m pytest -v              # Run tests
+```
+
 ## Key Details
 
 - Beat detection uses aubio's onset detector with threshold 0.3
