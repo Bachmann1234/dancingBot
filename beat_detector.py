@@ -1,5 +1,7 @@
 """Audio input and beat detection using sounddevice and aubio."""
 
+from typing import Callable
+
 import numpy as np
 import sounddevice as sd
 import aubio
@@ -8,7 +10,12 @@ import aubio
 class BeatDetector:
     """Detects beats from microphone input."""
 
-    def __init__(self, callback, sample_rate: int = 44100, hop_size: int = 512):
+    def __init__(
+        self,
+        callback: Callable[[], None],
+        sample_rate: int = 44100,
+        hop_size: int = 512,
+    ):
         """
         Initialize beat detector.
 

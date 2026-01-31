@@ -16,15 +16,9 @@ def run_demo_mode(animator: Animator, stop_event: threading.Event):
 
     while not stop_event.is_set():
         animator.trigger_bob()
-        # Sleep in small increments to allow quick shutdown:
-        # break the total beat interval into smaller sleeps so we can
-        # react promptly if stop_event is set.
-        sleep_increment = 0.1
-        num_sleeps = int(beat_interval / sleep_increment)
-        for _ in range(num_sleeps):
-            if stop_event.is_set():
-                break
-            time.sleep(sleep_increment)
+        # Wait for next beat, but wake up early if stop_event is set
+        if stop_event.wait(beat_interval):
+            break
 
 
 def run_live_mode(animator: Animator, stop_event: threading.Event):
