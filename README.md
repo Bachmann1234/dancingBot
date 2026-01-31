@@ -13,17 +13,18 @@ An ASCII terminal bot that listens to music and dances to the beat, inspired by 
 
 - Python 3.12+
 - PortAudio library (for microphone input)
+- aubio library (for beat detection)
 
 ### System Dependencies
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt install python3.12-venv libportaudio2
+sudo apt install python3.12-venv libportaudio2 libaubio-dev
 ```
 
 **macOS:**
 ```bash
-brew install portaudio
+brew install portaudio aubio
 ```
 
 ## Setup
@@ -71,5 +72,6 @@ dancingBot/
 ├── bot.py            # ASCII art frames
 ├── animator.py       # Terminal rendering
 ├── beat_detector.py  # Audio input and beat detection
+├── test_bot.py       # Tests
 └── requirements.txt  # Python dependencies
 ```
