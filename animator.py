@@ -3,7 +3,7 @@
 import sys
 import time
 import threading
-from bot import FRAMES, BOB_SEQUENCE
+from bot import FRAMES
 
 
 class Animator:
@@ -13,16 +13,18 @@ class Animator:
         self.fps = fps
         self.frame_duration = 1.0 / fps
         self.current_frame = "neutral"
-        self.animation_queue = []
         self.lock = threading.Lock()
         self.running = False
         self._last_frame_content = None
+        self._pose_toggle = False  # Alternates between up/down on each beat
 
     def trigger_bob(self):
-        """Trigger a bob animation sequence."""
+        """Trigger a pose change on beat."""
         with self.lock:
-            # Add bob sequence to queue (replaces any pending animation)
-            self.animation_queue = list(BOB_SEQUENCE)
+            # Simply toggle between up and down poses
+            self._pose_toggle = not self._pose_toggle
+            self.current_frame = "up" if self._pose_toggle else "down"
+            self._draw()
 
     def _clear_and_draw(self, frame_name: str):
         """Clear terminal and draw the specified frame."""
@@ -43,10 +45,6 @@ class Animator:
     def _update(self):
         """Update animation state and render."""
         with self.lock:
-            if self.animation_queue:
-                self.current_frame = self.animation_queue.pop(0)
-            else:
-                self.current_frame = "neutral"
             self._draw()
 
     def _draw(self):

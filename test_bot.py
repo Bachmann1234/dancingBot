@@ -4,7 +4,7 @@ import threading
 import unittest
 from unittest.mock import MagicMock, patch
 
-from bot import FRAMES, BOB_SEQUENCE
+from bot import FRAMES
 from animator import Animator
 
 
@@ -23,10 +23,10 @@ class TestBot(unittest.TestCase):
             self.assertIsInstance(frame, str, f"Frame '{name}' should be a string")
             self.assertTrue(len(frame) > 0, f"Frame '{name}' should not be empty")
 
-    def test_bob_sequence(self):
-        """Bob sequence should contain valid frame names."""
-        for frame_name in BOB_SEQUENCE:
-            self.assertIn(frame_name, FRAMES, f"'{frame_name}' should be a valid frame")
+    def test_up_and_down_frames_exist(self):
+        """Up and down frames should exist for beat animation."""
+        self.assertIn("up", FRAMES)
+        self.assertIn("down", FRAMES)
 
 
 class TestAnimator(unittest.TestCase):
@@ -36,44 +36,21 @@ class TestAnimator(unittest.TestCase):
         """Animator should start in neutral state."""
         animator = Animator(fps=30)
         self.assertEqual(animator.current_frame, "neutral")
-        self.assertEqual(animator.animation_queue, [])
+        self.assertFalse(animator._pose_toggle)
 
-    def test_trigger_bob_queues_animation(self):
-        """Triggering bob should queue the animation sequence."""
-        animator = Animator(fps=30)
-        animator.trigger_bob()
-        self.assertEqual(animator.animation_queue, list(BOB_SEQUENCE))
-
-    def test_trigger_bob_replaces_queue(self):
-        """New bob trigger should replace pending animation."""
-        animator = Animator(fps=30)
-        animator.animation_queue = ["up"]  # Partial animation in progress
-        animator.trigger_bob()
-        self.assertEqual(animator.animation_queue, list(BOB_SEQUENCE))
-
-    def test_update_consumes_queue(self):
-        """Update should consume animation queue."""
-        animator = Animator(fps=30)
-        animator._last_frame_content = FRAMES["neutral"]  # Prevent actual drawing
-
-        animator.trigger_bob()
-        initial_len = len(animator.animation_queue)
-
-        # Mock _draw to prevent terminal output
-        animator._draw = MagicMock()
-        animator._update()
-
-        self.assertEqual(len(animator.animation_queue), initial_len - 1)
-
-    def test_update_returns_to_neutral(self):
-        """After queue is empty, should return to neutral."""
+    def test_trigger_bob_toggles_pose(self):
+        """Triggering bob should toggle between up and down."""
         animator = Animator(fps=30)
         animator._draw = MagicMock()
-        animator.animation_queue = []
 
-        animator._update()
+        animator.trigger_bob()
+        self.assertEqual(animator.current_frame, "up")
 
-        self.assertEqual(animator.current_frame, "neutral")
+        animator.trigger_bob()
+        self.assertEqual(animator.current_frame, "down")
+
+        animator.trigger_bob()
+        self.assertEqual(animator.current_frame, "up")
 
     def test_frame_rate(self):
         """Animator should respect FPS setting."""
@@ -83,17 +60,17 @@ class TestAnimator(unittest.TestCase):
     def test_thread_safety(self):
         """Trigger bob should be thread-safe."""
         animator = Animator(fps=30)
+        animator._draw = MagicMock()
         exceptions = []
 
         def trigger_many():
             try:
                 for _ in range(100):
                     animator.trigger_bob()
-                    # Verify queue is always in valid state
+                    # Verify frame is always in valid state
                     with animator.lock:
-                        for frame in animator.animation_queue:
-                            if frame not in FRAMES:
-                                raise ValueError(f"Invalid frame: {frame}")
+                        if animator.current_frame not in FRAMES:
+                            raise ValueError(f"Invalid frame: {animator.current_frame}")
             except Exception as e:
                 exceptions.append(e)
 
@@ -105,9 +82,8 @@ class TestAnimator(unittest.TestCase):
 
         # Should not raise any exceptions
         self.assertEqual(exceptions, [])
-        # Queue should contain only valid frame names
-        for frame in animator.animation_queue:
-            self.assertIn(frame, FRAMES)
+        # Current frame should be valid
+        self.assertIn(animator.current_frame, FRAMES)
 
 
 class TestBeatDetector(unittest.TestCase):
