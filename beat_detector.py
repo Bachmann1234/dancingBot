@@ -1,14 +1,13 @@
-"""Audio input and beat detection using sounddevice and librosa."""
+"""Audio input and beat detection using sounddevice and spectral flux."""
 
 from typing import Callable
 
 import numpy as np
 import sounddevice as sd
-import librosa
 
 
 class BeatDetector:
-    """Detects beats from microphone input using onset detection."""
+    """Detects beats from microphone input using spectral flux onset detection."""
 
     def __init__(
         self,
@@ -30,13 +29,42 @@ class BeatDetector:
 
         # Onset detection parameters
         self.threshold = 0.3
-        self.prev_onset_strength = 0.0
 
-        # Buffer for accumulating audio for onset analysis
-        self.buffer_size = hop_size * 4
-        self.audio_buffer = np.zeros(self.buffer_size, dtype=np.float32)
+        # Previous spectrum magnitude for spectral flux calculation
+        self.prev_spectrum = None
+
+        # For peak detection: track recent flux values
+        self.prev_flux = 0.0
+        self.prev_prev_flux = 0.0
 
         self.stream = None
+
+    def _compute_spectral_flux(self, audio_chunk: np.ndarray) -> float:
+        """
+        Compute spectral flux between current and previous frame.
+
+        Spectral flux measures the change in spectrum magnitude between frames,
+        which correlates with onsets/beats.
+        """
+        # Apply Hann window to reduce spectral leakage
+        windowed = audio_chunk * np.hanning(len(audio_chunk))
+
+        # Compute FFT magnitude spectrum
+        spectrum = np.abs(np.fft.rfft(windowed))
+
+        if self.prev_spectrum is None:
+            self.prev_spectrum = spectrum
+            return 0.0
+
+        # Spectral flux: sum of positive differences (half-wave rectified)
+        diff = spectrum - self.prev_spectrum
+        flux = np.sum(np.maximum(0, diff))
+
+        # Normalize by spectrum size
+        flux = flux / len(spectrum)
+
+        self.prev_spectrum = spectrum
+        return flux
 
     def _audio_callback(self, indata, frames, _time_info, status):
         """Process incoming audio data."""
@@ -47,33 +75,28 @@ class BeatDetector:
         # Convert to mono float32 and ensure 1D shape
         audio = indata.astype(np.float32).flatten()
 
-        # Shift buffer and add new audio
-        self.audio_buffer = np.roll(self.audio_buffer, -len(audio))
-        self.audio_buffer[-len(audio) :] = audio
+        # Process in hop_size chunks
+        for i in range(0, len(audio), self.hop_size):
+            chunk = audio[i : i + self.hop_size]
+            if len(chunk) == self.hop_size:
+                try:
+                    flux = self._compute_spectral_flux(chunk)
 
-        # Compute onset strength using librosa
-        try:
-            onset_env = librosa.onset.onset_strength(
-                y=self.audio_buffer,
-                sr=self.sample_rate,
-                hop_length=self.hop_size,
-            )
+                    # Peak detection: current value must be a local maximum
+                    # (greater than both neighbors) and above threshold
+                    if (
+                        self.prev_flux > self.threshold
+                        and self.prev_flux > self.prev_prev_flux
+                        and self.prev_flux >= flux
+                    ):
+                        self.callback()
 
-            # Get the latest onset strength value
-            if len(onset_env) > 0:
-                current_strength = onset_env[-1]
-
-                # Detect onset: current strength exceeds threshold and is a local peak
-                if (
-                    current_strength > self.threshold
-                    and current_strength > self.prev_onset_strength
-                ):
-                    self.callback()
-
-                self.prev_onset_strength = current_strength
-        except Exception:
-            # Don't let analysis errors crash the audio stream
-            pass
+                    # Shift flux history
+                    self.prev_prev_flux = self.prev_flux
+                    self.prev_flux = flux
+                except (ValueError, IndexError):
+                    # Don't let analysis errors crash the audio stream
+                    pass
 
     def start(self):
         """Start listening to microphone."""

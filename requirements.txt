@@ -1,5 +1,4 @@
 sounddevice
-librosa
 numpy<2
 pytest
 ruff

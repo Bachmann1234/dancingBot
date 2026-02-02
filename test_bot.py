@@ -90,8 +90,7 @@ class TestBeatDetector(unittest.TestCase):
     """Tests for beat_detector.py."""
 
     @patch("beat_detector.sd")
-    @patch("beat_detector.librosa")
-    def test_initialization(self, mock_librosa, mock_sd):
+    def test_initialization(self, mock_sd):
         """BeatDetector should initialize with callback."""
         from beat_detector import BeatDetector
 
@@ -103,8 +102,7 @@ class TestBeatDetector(unittest.TestCase):
         self.assertEqual(detector.hop_size, 512)
 
     @patch("beat_detector.sd")
-    @patch("beat_detector.librosa")
-    def test_start_creates_stream(self, mock_librosa, mock_sd):
+    def test_start_creates_stream(self, mock_sd):
         """Start should create and start audio stream."""
         from beat_detector import BeatDetector
 
@@ -116,8 +114,7 @@ class TestBeatDetector(unittest.TestCase):
         mock_sd.InputStream.return_value.start.assert_called_once()
 
     @patch("beat_detector.sd")
-    @patch("beat_detector.librosa")
-    def test_stop_closes_stream(self, mock_librosa, mock_sd):
+    def test_stop_closes_stream(self, mock_sd):
         """Stop should stop and close audio stream."""
         from beat_detector import BeatDetector
 

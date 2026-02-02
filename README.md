@@ -59,7 +59,7 @@ Press `Ctrl+C` to exit.
 ## How It Works
 
 1. **Microphone Input**: Captures audio using `sounddevice`
-2. **Beat Detection**: Uses `librosa` for real-time onset detection
+2. **Beat Detection**: Uses spectral flux for real-time onset detection
 3. **Animation**: Renders ASCII frames to terminal at 30 FPS
 
 ## Project Structure
