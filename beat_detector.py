@@ -1,14 +1,14 @@
-"""Audio input and beat detection using sounddevice and aubio."""
+"""Audio input and beat detection using sounddevice and librosa."""
 
 from typing import Callable
 
 import numpy as np
 import sounddevice as sd
-import aubio
+import librosa
 
 
 class BeatDetector:
-    """Detects beats from microphone input."""
+    """Detects beats from microphone input using onset detection."""
 
     def __init__(
         self,
@@ -28,17 +28,13 @@ class BeatDetector:
         self.sample_rate = sample_rate
         self.hop_size = hop_size
 
-        # Initialize aubio onset detector
-        # 'default' method works well for general beat detection
-        self.onset = aubio.onset(
-            method="default",
-            buf_size=hop_size * 2,
-            hop_size=hop_size,
-            samplerate=sample_rate,
-        )
+        # Onset detection parameters
+        self.threshold = 0.3
+        self.prev_onset_strength = 0.0
 
-        # Adjust sensitivity (lower = more sensitive)
-        self.onset.set_threshold(0.3)
+        # Buffer for accumulating audio for onset analysis
+        self.buffer_size = hop_size * 4
+        self.audio_buffer = np.zeros(self.buffer_size, dtype=np.float32)
 
         self.stream = None
 
@@ -51,17 +47,33 @@ class BeatDetector:
         # Convert to mono float32 and ensure 1D shape
         audio = indata.astype(np.float32).flatten()
 
-        # Process in hop_size chunks
-        for i in range(0, len(audio), self.hop_size):
-            chunk = audio[i : i + self.hop_size]
-            if len(chunk) == self.hop_size:
-                # Check for onset/beat
-                try:
-                    if self.onset(chunk):
-                        self.callback()
-                except Exception:
-                    # Don't let callback errors crash the audio stream
-                    pass
+        # Shift buffer and add new audio
+        self.audio_buffer = np.roll(self.audio_buffer, -len(audio))
+        self.audio_buffer[-len(audio) :] = audio
+
+        # Compute onset strength using librosa
+        try:
+            onset_env = librosa.onset.onset_strength(
+                y=self.audio_buffer,
+                sr=self.sample_rate,
+                hop_length=self.hop_size,
+            )
+
+            # Get the latest onset strength value
+            if len(onset_env) > 0:
+                current_strength = onset_env[-1]
+
+                # Detect onset: current strength exceeds threshold and is a local peak
+                if (
+                    current_strength > self.threshold
+                    and current_strength > self.prev_onset_strength
+                ):
+                    self.callback()
+
+                self.prev_onset_strength = current_strength
+        except Exception:
+            # Don't let analysis errors crash the audio stream
+            pass
 
     def start(self):
         """Start listening to microphone."""
