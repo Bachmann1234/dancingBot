@@ -27,8 +27,13 @@ class BeatDetector:
         self.sample_rate = sample_rate
         self.hop_size = hop_size
 
-        # Onset detection parameters
+        # Onset detection threshold for normalized spectral flux.
+        # This is a heuristic default that may need tuning depending on
+        # audio source and desired sensitivity.
         self.threshold = 0.3
+
+        # Pre-compute Hann window for spectral analysis
+        self.window = np.hanning(hop_size)
 
         # Previous spectrum magnitude for spectral flux calculation
         self.prev_spectrum = None
@@ -47,7 +52,7 @@ class BeatDetector:
         which correlates with onsets/beats.
         """
         # Apply Hann window to reduce spectral leakage
-        windowed = audio_chunk * np.hanning(len(audio_chunk))
+        windowed = audio_chunk * self.window
 
         # Compute FFT magnitude spectrum
         spectrum = np.abs(np.fft.rfft(windowed))
@@ -82,7 +87,7 @@ class BeatDetector:
                 try:
                     flux = self._compute_spectral_flux(chunk)
 
-                    # Peak detection: current value must be a local maximum
+                    # Peak detection: previous flux must be a local maximum
                     # (greater than both neighbors) and above threshold
                     if (
                         self.prev_flux > self.threshold
@@ -95,8 +100,10 @@ class BeatDetector:
                     self.prev_prev_flux = self.prev_flux
                     self.prev_flux = flux
                 except (ValueError, IndexError):
-                    # Don't let analysis errors crash the audio stream
-                    pass
+                    # Reset state to avoid stale data on next iteration
+                    self.prev_spectrum = None
+                    self.prev_flux = 0.0
+                    self.prev_prev_flux = 0.0
 
     def start(self):
         """Start listening to microphone."""
