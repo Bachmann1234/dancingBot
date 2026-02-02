@@ -1,5 +1,4 @@
 sounddevice
-aubio
 numpy<2
 pytest
 ruff
